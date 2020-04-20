@@ -1,6 +1,7 @@
 import clearbit
 import json
 import pandas as pd
+from pandas.io.json import json_normalize
 import configparser
 
 config = configparser.ConfigParser()
@@ -11,29 +12,15 @@ clearbit.key = config['clearbit']['key']
 # client = pymongo.MongoClient("mongodb+srv://bernino:<password>@cluster0-nvy1s.mongodb.net/test?retryWrites=true&w=majority")
 # db = client.test
 
-
 df = pd.read_csv('list.csv')
 
 # let's be polite and run a small set while we develop
 # also we can max do 1000 per month
 contacts = df.copy()
-contacts = contacts[132:140]
+contacts = contacts[200:250]
 
 # in case we don't understand the data structure
 # print(contacts)
-
-faked = {
-    "company": {
-        "category": {
-            "industry": "Diversified Telecommunication Services",
-            "industryGroup": "Telecommunication Services",
-            "naicsCode": "54",
-            "sector": "Telecommunication Services",
-            "sicCode": "73",
-            "subIndustry": "Integrated Telecommunication Services"
-        },
-    }
-}
 
 for index, row in contacts.iterrows():
     lookup = {}
@@ -52,12 +39,13 @@ for index, row in contacts.iterrows():
     try:
         if "gmail" not in email and "hotmail" not in email:
             lookup = clearbit.Enrichment.find(email=email, stream=True)
-            # lookup = faked
         else:
             print("gmail or hotmail... not checking with API")
-    except:
-        print("error 0")
+    except Exception as e:
+        print(e)
 
+    # data = json_normalize(lookup)
+    
     try:
         contacts.loc[index,'segment'] = lookup['company']['category']['industry']
     except:
@@ -98,8 +86,8 @@ for index, row in contacts.iterrows():
         jsonfile = "data"+str(index)+".json"
         with open(jsonfile, 'w') as outfile:
             json.dump(lookup, outfile, sort_keys=True, indent=4)
-    except:
-        print("json error")
+    except Exception as e:
+        print(e)
 
     del lookup
 # the end
