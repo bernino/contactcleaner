@@ -1,12 +1,16 @@
 import clearbit
 import json
+import os
 import pandas as pd
 from pandas.io.json import json_normalize
 import configparser
 
-config = configparser.ConfigParser()
-config.read('secrets')
-clearbit.key = config['clearbit']['key']
+if os.getenv('CLEARBIT_TOKEN'):
+    clearbit.key = os.getenv('CLEARBIT_TOKEN')
+else:
+    config = configparser.ConfigParser()
+    config.read('secrets')
+    clearbit.key = config['clearbit']['key']
 
 # TODO: MongoDB
 # client = pymongo.MongoClient("mongodb+srv://bernino:<password>@cluster0-nvy1s.mongodb.net/test?retryWrites=true&w=majority")
@@ -45,22 +49,22 @@ for index, row in contacts.iterrows():
         print(e)
 
     # data = json_normalize(lookup)
-    
+
     try:
         contacts.loc[index,'segment'] = lookup['company']['category']['industry']
     except:
         print("error 1")
-    
+
     try:
         contacts.loc[index,'naics'] = lookup['company']['category']['naicsCode']
     except:
         print("error 2")
-    
+
     try:
         contacts.loc[index,'description'] = lookup['company']['description']
     except:
         print("error 3")
-    
+
     try:
         if lookup['company']['twitter']['handle'] is not None:
             contacts.loc[index,'twitter'] = "https://twitter.com/"+str(lookup['company']['twitter']['handle'])
