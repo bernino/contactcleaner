@@ -2,7 +2,6 @@ import clearbit
 import json
 import os
 import pandas as pd
-from pandas.io.json import json_normalize
 import configparser
 
 if os.getenv('CLEARBIT_TOKEN'):
@@ -21,7 +20,11 @@ df = pd.read_csv('list.csv')
 # let's be polite and run a small set while we develop
 # also we can max do 1000 per month
 contacts = df.copy()
-contacts = contacts[200:250]
+contacts = contacts[:250]
+
+if not os.path.exists('json-dumps'):
+    os.makedirs('json-dumps')
+
 
 # in case we don't understand the data structure
 # print(contacts)
@@ -48,7 +51,16 @@ for index, row in contacts.iterrows():
     except Exception as e:
         print(e)
 
-    # data = json_normalize(lookup)
+    try:
+        contacts.loc[index,'firstname'] = lookup['person']['name']['givenName']
+        contacts.loc[index,'lastname'] = lookup['person']['name']['familyName']
+    except:
+        print("error 0")
+
+    try:
+        contacts.loc[index,'description'] = lookup['company']['description']
+    except:
+        print("error 3")
 
     try:
         contacts.loc[index,'segment'] = lookup['company']['category']['industry']
@@ -59,11 +71,6 @@ for index, row in contacts.iterrows():
         contacts.loc[index,'naics'] = lookup['company']['category']['naicsCode']
     except:
         print("error 2")
-
-    try:
-        contacts.loc[index,'description'] = lookup['company']['description']
-    except:
-        print("error 3")
 
     try:
         if lookup['company']['twitter']['handle'] is not None:
@@ -92,11 +99,10 @@ for index, row in contacts.iterrows():
     # Dump all JSON data to files for future reference
     # this should better be done into a MongoDB
     try:
-        jsonfile = "data"+str(index)+".json"
+        jsonfile = "json-dumps/data"+str(index)+".json"
         with open(jsonfile, 'w') as outfile:
             json.dump(lookup, outfile, sort_keys=True, indent=4)
     except Exception as e:
         print(e)
 
     del lookup
-# the end
