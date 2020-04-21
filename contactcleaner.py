@@ -71,6 +71,11 @@ for index, row in contacts.iterrows():
     except:
         print("error 4")
 
+    try:
+        contacts.loc[index,'company_name'] = lookup['company']['name']
+    except:
+        print("error 5")
+
     # attention: record is a DF series and not a df so its transposed
     # transpose the created record and write sequentially
     # even if there's an iops penalty on writing sequentially
