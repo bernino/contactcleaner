@@ -5,11 +5,12 @@ import pandas as pd
 import configparser
 import requests
 import nltk
+import tldextract
 
 api_url_base = 'https://company.clearbit.com/v1/'
-source_file = 'credit-inst.csv'
+source_file = 'hospitals-UK.csv'
 out_file = 'domainresolution.csv'
-colname = "Firm"
+colname = "OrganisationName"
 
 if os.getenv('CLEARBIT_TOKEN'):
     clearbit.key = os.getenv('CLEARBIT_TOKEN')
@@ -22,31 +23,26 @@ headers = {'Content-Type': 'application/json',
            'Authorization': 'Bearer {0}'.format(clearbit.key)}
 
 df = pd.read_csv(source_file)
-df = df[:35]
+df = df[20:50]
 
 def nouns(name):
     tokens = nltk.word_tokenize(name)
-    stopwords = ['Ltd.', 'Co.', '(UK)', 'UK', 'Limited', 'Assurance', 'Society', 'Ltd', 'plc', 'Co', 
+    stopwords = ['Virgin', 'Care', 'Nuffield', 'Health', 'Ltd.', 'Co.', '(UK)', 'UK', 'Limited', 'Assurance', 'Society', 'Ltd', 'plc', 'Co', 
                  'Financial', 'Company', 'Branch', 'Group', 'London', 'Corporation', 'PLC', 'FS', 'Plc']
     tokens = [word for word in tokens if word not in stopwords]
     tags = nltk.pos_tag(tokens)
-    # print(tags)
     nouns = [word for word,pos in tags if (pos == 'NNP' or pos == 'JJ' or pos == 'NN')]
     nouns = ' '.join(nouns)
-    # name = [[' '.join(i)] for i in nouns]
     return nouns
 
 def get_domain(name):
     # based on https://clearbit.com/docs?shell#name-to-domain-api
-
     api_url = '{}domains/find?name={}'.format(api_url_base, name)
     response = requests.get(api_url, headers=headers)
-
     if response.status_code == 200:
         return json.loads(response.content.decode('utf-8'))
     else:
         return None
-
 
 for index, row in df.iterrows():
     # TODO: only process Authorised firms
@@ -61,8 +57,15 @@ for index, row in df.iterrows():
         # try with nounname
         name = get_domain(nounname)
         if name is None:
-            df.loc[index,'domain'] = "none"
-            df.loc[index,'nounname'] = nounname
+            # specific for a hospitals csv
+            if row['Website']:
+                tldr = tldextract.extract(str(row['Website']))
+                domain = tldr.domain+'.'+tldr.suffix
+                df.loc[index,'domain'] = domain
+                df.loc[index,'nounname'] = nounname
+            else:
+                df.loc[index,'domain'] = "none"
+                df.loc[index,'nounname'] = nounname
         else:
             df.loc[index,'domain'] = name['domain']
             df.loc[index,'nounname'] = nounname
