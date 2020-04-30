@@ -5,11 +5,12 @@ from pandas.io.json import json_normalize
 import os
 import configparser
 
-source = 'credit-inst-domains.csv'
+source = 'swiss-unis-domainresolution.csv'
+out_file = 'mailhunter.csv'
 colname = 'domain'
 
 df = pd.read_csv(source)
-# df = df[:6]
+# df = df[:2]
 
 if os.getenv('snov_client_id'):
     client_id = os.getenv('snov_client_id')
@@ -50,9 +51,10 @@ def get_domain_search(domain):
 normalised = pd.DataFrame()
 
 for index, row in df.iterrows():
-    if row[colname] != 'none':
-        print("processing {}".format(row[colname]))
-        emails = get_domain_search(row[colname])
+    domain = row[colname]
+    if domain != 'none' and domain != 'nan.':
+        print("processing {}".format(domain))
+        emails = get_domain_search(domain)
         # print(json.dumps(emails, sort_keys=True, indent=4))
         try:
             emdf = json_normalize(emails['emails'])
@@ -62,4 +64,4 @@ for index, row in df.iterrows():
         except Exception as e:
             print(e)
 
-normalised.to_csv('mailhunter.csv')
+normalised.to_csv(out_file)
