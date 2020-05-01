@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import requests
 import json
 import pandas as pd 
@@ -5,7 +7,7 @@ from pandas.io.json import json_normalize
 import os
 import configparser
 
-source = 'swiss-unis-domainresolution.csv'
+source = ''
 out_file = 'mailhunter.csv'
 colname = 'domain'
 
