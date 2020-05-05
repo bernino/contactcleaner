@@ -7,12 +7,12 @@ from pandas.io.json import json_normalize
 import os
 import configparser
 
-source = ''
+source = 'all-eu-unis-domains.csv'
 out_file = 'mailhunter.csv'
 colname = 'domain'
 
 df = pd.read_csv(source)
-# df = df[:2]
+df = df[2609:]
 
 if os.getenv('snov_client_id'):
     client_id = os.getenv('snov_client_id')
@@ -54,15 +54,25 @@ normalised = pd.DataFrame()
 
 for index, row in df.iterrows():
     domain = row[colname]
-    if domain != 'none' and domain != 'nan.':
-        print("processing {}".format(domain))
-        emails = get_domain_search(domain)
-        # print(json.dumps(emails, sort_keys=True, indent=4))
+    if domain != 'none' and domain != 'nan.' and domain != 'wikipedia.org' and domain != '4icu.org':
+        print("processing {} {}".format(index, domain))
+        try:
+            emails = get_domain_search(domain)
+        except Exception as e:
+            print(e)
+
         try:
             emdf = json_normalize(emails['emails'])
             emdf['org'] = emails['companyName']
-            print(emdf.head())
+
+            if 'twitter' not in emdf.columns:
+                emdf['twitter'] = 'nan.' 
+
+            # fail safe csv writing just in case we get interrupted:
+            emdf = emdf[sorted(emdf)]
+            emdf.to_csv('list.csv', mode='a', header=False)
             normalised = normalised.append(emdf, sort=True)
+
         except Exception as e:
             print(e)
 
