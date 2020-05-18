@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import requests
 import json
 import pandas as pd 
@@ -12,7 +11,7 @@ out_file = 'mailhunter.csv'
 domains = 'domain'
 
 df = pd.read_csv(source)
-df = df[:5]
+# df = df[:5]
 
 if os.getenv('snov_client_id'):
     client_id = os.getenv('snov_client_id')
@@ -45,7 +44,6 @@ def get_domain_search(domain):
             'limit': 100
     }
     res = requests.post('https://api.snov.io/v1/get-domain-emails-with-info', data=params)
-    res.encoding = 'utf-8'
     return json.loads(res.text)
 
 
@@ -72,7 +70,7 @@ for index, row in df.iterrows():
 
             # fail safe csv writing just in case we get interrupted:
             emdf = emdf[sorted(emdf)]
-            emdf.to_csv('list.csv', mode='a', header=False)
+            emdf.to_csv('list.csv', mode='a', header=False, encoding='utf-8')
             normalised = normalised.append(emdf, sort=True)
 
         except Exception as e:
