@@ -10,7 +10,7 @@ Before you get started, you need API keys/tokens for the following services
 
 * [SerpApi](https://serpapi.com/) (Primary)
 * [Clearbit](https://clearbit.com/) (Fallback)
-* [Hunter](
+* [Hunter](https://hunter.io)
 
 ## Workflow
 
