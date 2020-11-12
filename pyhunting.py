@@ -43,11 +43,11 @@ def main():
     df = df.drop_duplicates(subset=['Domain'])
 
     for index, row in df.iterrows():
-        domain = row['Domain']
+        domain = row['Domain'].title()
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
         if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
-            print("Processing {} on row {}".format(domain, index))
+            print("Processing {} ({}/{})".format(domain, index, len(df)-1))
 
             # Had to remove limit=100 as it broke the client
             results = hunter.domain_search(domain, emails_type='personal')

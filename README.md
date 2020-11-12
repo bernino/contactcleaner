@@ -41,6 +41,8 @@ $ python domainresolution.py input-file.csv output-file.csv
 
 You can now inspect your new file (`output-file.csv`) and will notice that it is the same as `input-file.csv`, but with a new column called "Domain".
 
+Do however sanity check this file manually to ensure it makes sense. You might need to delete some rows that doesn't make sense before moving on to the next step.
+
 ### Contact Hunting
 
 With the data from the previous step, we can now start looking for contacts at these companies.

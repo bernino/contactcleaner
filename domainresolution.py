@@ -77,10 +77,9 @@ def main():
     df = pd.read_csv(input_file)
 
     for index, row in df.iterrows():
-        orgname = row['Firm']
+        orgname = row['Firm'].title()
         location = row['Location']
-        print('..........')
-        print("Processing {}".format(orgname))
+        print("Processing {} ({}/{})".format(orgname, index, len(df)-1))
 
         # Try with google's first result
         name = googlesearch(orgname, location)
