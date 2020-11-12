@@ -59,3 +59,7 @@ We can now do the lookup.
 $ python pyhunting.py input-file.csv output-file.csv
 [...]
 ```
+
+## Experimentals
+
+There are a few experimental tools in the lab folder that are yet to be updated/documented.

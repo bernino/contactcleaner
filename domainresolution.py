@@ -77,13 +77,15 @@ def main():
     df = pd.read_csv(input_file)
 
     for index, row in df.iterrows():
-        orgname = row['Firm'].title()
+        # Let's make sure we have nice and formatted company namnes
+        row['Firm'] = row['Firm'].title()
+
+        orgname = row['Firm']
         location = row['Location']
         print("Processing {} ({}/{})".format(orgname, index, len(df)-1))
 
         # Try with google's first result
         name = googlesearch(orgname, location)
-        print('result: {}'.format(name))
 
         if name is None and CLEARBIT_TOKEN:
             name = get_domain_from_clearbit(orgname)
