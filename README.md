@@ -43,6 +43,17 @@ You can now inspect your new file (`output-file.csv`) and will notice that it is
 
 Do however sanity check this file manually to ensure it makes sense. You might need to delete some rows that doesn't make sense before moving on to the next step.
 
+#### Troubleshooting
+
+If for whatever reason the run crashes, you can either skip forward to the next row by doing:
+
+```
+$ python domainresolution.py input-file.csv output-file.csv N
+[...]
+```
+
+(where N is the line you want to start from)
+
 ### Contact Hunting
 
 With the data from the previous step, we can now start looking for contacts at these companies.
@@ -60,6 +71,8 @@ $ python pyhunting.py input-file.csv output-file.csv
 [...]
 ```
 
+Similarly to `domainresolutoin.py`, you can also resume a run by appending a starting point.
+
 ## Experimentals
 
-There are a few experimental tools in the lab folder that are yet to be updated/documented.
+There are a few experimental tools in the `lab/` folder that are yet to be updated/documented.

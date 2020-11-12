@@ -6,6 +6,7 @@ import clearbit
 import pandas as pd
 import requests
 import tldextract
+from time import sleep
 from serpapi import GoogleSearch
 
 if os.getenv('CLEARBIT_TOKEN'):
@@ -35,9 +36,13 @@ def googlesearch(name, location=False):
         client = GoogleSearch({"q": name, "location": location, "api_key": serp_api_key})
 
     result = client.get_json()
-    domain = result['organic_results'][0]['link']
-    tldr = tldextract.extract(domain)
-    return '{}.{}'.format(tldr.domain, tldr.suffix)
+    try:
+        domain = result['organic_results'][0]['link']
+        tldr = tldextract.extract(domain)
+        return '{}.{}'.format(tldr.domain, tldr.suffix)
+    except KeyError:
+        print("Unable to lookup record from SerpAPI.")
+    return
 
 
 def get_domain_from_clearbit(name):
@@ -57,24 +62,28 @@ def get_domain_from_clearbit(name):
         name = json.loads(response.content.decode('utf-8'))
         return name['domain']
     else:
-        return None
+        return
 
 
 def main():
     input_file = sys.argv[1]
     output_file = sys.argv[2]
+    skip_to_row = int(sys.argv[3])
 
     if not os.path.isfile(input_file):
         print("Input file doesn't exist. Exiting.")
         sys.exit(1)
 
-    if os.path.isfile(output_file):
+    if os.path.isfile(output_file) and not skip_to_row:
         print("Output file ({}) exists already. Exiting.".format(output_file))
         sys.exit(1)
 
     clearbit.key = CLEARBIT_TOKEN
 
     df = pd.read_csv(input_file)
+
+    if skip_to_row:
+        df = df[skip_to_row:]
 
     for index, row in df.iterrows():
         # Let's make sure we have nice and formatted company namnes
@@ -87,16 +96,21 @@ def main():
         # Try with google's first result
         name = googlesearch(orgname, location)
 
-        if name is None and CLEARBIT_TOKEN:
+        if name:
+            df.loc[index,'Domain'] = name
+            print("Found via Google: {}".format(name))
+        elif not name and CLEARBIT_TOKEN:
             name = get_domain_from_clearbit(orgname)
-            if name is None:
+            if not name:
                 df.loc[index,'Domain'] = "none"
             else:
                 df.loc[index,'Domain'] = name
                 print("Found via Clearbit: {}".format(name))
         else:
-            df.loc[index,'Domain'] = name
-            print("Found via Google: {}".format(name))
+            print("Unable to find record in Google lookup. Assuming rate limiting. Sleeping for 30s")
+            sleep(30)
+            break
+
         record = df.loc[index, :]
         record = pd.DataFrame(record)
         record = record.transpose()

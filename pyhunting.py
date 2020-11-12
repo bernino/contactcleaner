@@ -1,9 +1,10 @@
 import configparser
-import pandas as pd
 import sys
 import os
+import requests
+import pandas as pd
 from pyhunter import PyHunter
-from pandas.io.json import json_normalize
+from pandas import json_normalize
 import validators
 
 
@@ -20,12 +21,13 @@ else:
 def main():
     input_file = sys.argv[1]
     output_file = sys.argv[2]
+    skip_to_row = int(sys.argv[3])
 
     if not os.path.isfile(input_file):
         print("Input file doesn't exist. Exiting.")
         sys.exit(1)
 
-    if os.path.isfile(output_file):
+    if os.path.isfile(output_file) and not skip_to_row:
         print("Output file ({}) exists already. Exiting.".format(output_file))
         sys.exit(1)
 
@@ -35,7 +37,9 @@ def main():
 
     hunter = PyHunter(HUNTER_API_KEY)
     df = pd.read_csv(input_file)
-    organisation = 'Firm'
+
+    if skip_to_row:
+        df = df[skip_to_row:]
 
     normalised2 = pd.DataFrame()
 
@@ -43,21 +47,22 @@ def main():
     df = df.drop_duplicates(subset=['Domain'])
 
     for index, row in df.iterrows():
-        domain = row['Domain'].title()
+        domain = row['Domain']
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
         if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
             print("Processing {} ({}/{})".format(domain, index, len(df)-1))
 
             # Had to remove limit=100 as it broke the client
-            results = hunter.domain_search(domain, emails_type='personal')
-            if not results:
-                print("No records found....")
+            try:
+                results = hunter.domain_search(domain, emails_type='personal')
+            except requests.exceptions.HTTPError as e:
+                print("Received error: {}".format(e))
                 break
 
             normalised = json_normalize(results['emails'])
-            normalised['org'] = row[organisation]
-            normalised.to_csv(input_file, mode='a', header=False, encoding='utf-8')
+            normalised['org'] = row['Firm']
+            normalised.to_csv(output_file, mode='a', header=False, encoding='utf-8')
             normalised2 = normalised2.append(normalised, sort=True)
 
     normalised2.to_csv(output_file)
