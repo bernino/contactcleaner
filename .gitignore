@@ -1,14 +1,5 @@
 venv
-list.csv
-cleanlist.csv
-json-dumps
-json
 .DS_Store
 .ipynb_checkpoints/
 .vscode/
-IT/
-UK/
-banks/
-hospitals/
-only-eu-unis.ipynb
-unis/
+*.csv
