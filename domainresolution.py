@@ -84,6 +84,7 @@ def main():
     clearbit.key = CLEARBIT_TOKEN
 
     df = pd.read_csv(input_file)
+    full_df = df
 
     if skip_to_row:
         full_df = df

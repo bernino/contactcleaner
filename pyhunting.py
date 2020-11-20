@@ -40,6 +40,7 @@ def main():
 
     hunter = PyHunter(HUNTER_API_KEY)
     df = pd.read_csv(input_file)
+    full_df = df
 
     if skip_to_row:
         full_df = df
