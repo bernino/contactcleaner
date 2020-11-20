@@ -42,6 +42,7 @@ def main():
     df = pd.read_csv(input_file)
 
     if skip_to_row:
+        full_df = df
         df = df[skip_to_row:]
 
     normalised2 = pd.DataFrame()
@@ -54,7 +55,7 @@ def main():
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
         if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
-            print("Processing {} ({}/{})".format(domain, index, len(df)-1))
+            print("Processing {} ({}/{})".format(domain, index, len(full_df)-1))
 
             # Had to remove limit=100 as it broke the client
             try:

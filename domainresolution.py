@@ -86,6 +86,7 @@ def main():
     df = pd.read_csv(input_file)
 
     if skip_to_row:
+        full_df = df
         df = df[skip_to_row:]
 
     for index, row in df.iterrows():
@@ -94,7 +95,7 @@ def main():
 
         orgname = row['Firm']
         location = row['Location']
-        print("Processing {} ({}/{})".format(orgname, index, len(df)-1))
+        print("Processing {} ({}/{})".format(orgname, index, len(full_df)-1))
 
         # Try with google's first result
         name = googlesearch(orgname, location)
@@ -112,7 +113,6 @@ def main():
         else:
             print("Unable to find record in Google lookup. Assuming rate limiting. Sleeping for 30s")
             sleep(30)
-            break
 
         record = df.loc[index, :]
         record = pd.DataFrame(record)
