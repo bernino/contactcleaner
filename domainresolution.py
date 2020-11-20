@@ -68,7 +68,10 @@ def get_domain_from_clearbit(name):
 def main():
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    skip_to_row = int(sys.argv[3])
+    skip_to_row = False
+
+    if len(sys.argv) > 3:
+        skip_to_row = int(sys.argv[3])
 
     if not os.path.isfile(input_file):
         print("Input file doesn't exist. Exiting.")
