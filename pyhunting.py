@@ -21,7 +21,7 @@ else:
 def main():
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    skip_to_row = int(sys.argv[3])
+    skip_to_row = False
 
     if not os.path.isfile(input_file):
         print("Input file doesn't exist. Exiting.")
@@ -30,6 +30,9 @@ def main():
     if os.path.isfile(output_file) and not skip_to_row:
         print("Output file ({}) exists already. Exiting.".format(output_file))
         sys.exit(1)
+
+    if len(sys.argv) > 3:
+        skip_to_row = int(sys.argv[3])
 
     if not HUNTER_API_KEY:
         print("Hunter API Key missing. Exiting.")
