@@ -1,7 +1,7 @@
-import configparser
 import sys
 import os
 import requests
+import configparser
 import pandas as pd
 from pyhunter import PyHunter
 from pandas import json_normalize
@@ -40,10 +40,9 @@ def main():
 
     hunter = PyHunter(HUNTER_API_KEY)
     df = pd.read_csv(input_file)
-    full_df = df
+    tally = len(df)
 
     if skip_to_row:
-        full_df = df
         df = df[skip_to_row:]
 
     normalised2 = pd.DataFrame()
@@ -56,7 +55,7 @@ def main():
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
         if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
-            print("Processing {} ({}/{})".format(domain, index, len(full_df)-1))
+            print("Processing {} ({}/{})".format(domain, index, tally-1))
 
             # Had to remove limit=100 as it broke the client
             try:

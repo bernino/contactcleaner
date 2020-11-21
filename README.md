@@ -28,18 +28,36 @@ The input CSV file must have the following headers:
 
 First we need to set our API key/tokens:
 ```
-$ export CLEARBIT_TOKEN=YourToken
 $ export SERP_API_KEY=YourApiKey
+```
+
+Optionally, you may specify the following too:
+```
+$ export CLEARBIT_TOKEN=YourToken
+$ export SERP_API_FAST=True
 ```
 
 Next, we can look up the data:
 
 ```
-$ python domainresolution.py input-file.csv output-file.csv
+$ python domainresolution.py \
+    --input-file input_list.csv \
+    --output-file output_list.csv
 [...]
 ```
 
-You can now inspect your new file (`output-file.csv`) and will notice that it is the same as `input-file.csv`, but with a new column called "Domain".
+Optionally, you man also specify `--start-row` and `--end-row`, which is useful for resuming a run, or to perform a partial run.
+
+```
+$ python domainresolution.py \
+    --input-file input_list.csv \
+    --output-file output_list.csv \
+    --start-row X \
+    --end-row Y
+[...]
+```
+
+You can now inspect your new file (`output_file.csv`) and will notice that it is the same as `input_file.csv`, but with a new column called "Domain".
 
 Do however sanity check this file manually to ensure it makes sense. You might need to delete some rows that doesn't make sense before moving on to the next step.
 
