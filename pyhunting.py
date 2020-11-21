@@ -60,7 +60,7 @@ def main():
 
     if args.start_row != 0:
         print("Starting on row {}".format(args.start_row + 1))
-        df = df[args.start_row +1 :]
+        df = df[args.start_row + 1 :]
 
     if args.end_row != 0:
         print("Will stop on row {}".format(args.end_row + 1))
@@ -71,7 +71,6 @@ def main():
         sys.exit(1)
 
     hunter = PyHunter(HUNTER_API_KEY)
-    normalised2 = pd.DataFrame()
     tally = len(df)
 
     # Just in case there are duplicate domains we don't want to API call twice
@@ -81,22 +80,27 @@ def main():
         domain = row['Domain']
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
-        if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
-            print("Processing {} ({}/{})".format(domain, index, tally-1))
+        if not validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
+            print("{} is an invalid domain. Skipping.".format(domain))
+            break
 
-            # Had to remove limit=100 as it broke the client
-            try:
-                results = hunter.domain_search(domain, emails_type='personal')
-            except requests.exceptions.HTTPError as e:
-                print("Received error: {}".format(e))
-                break
+        print("Processing {} ({}/{})".format(domain, index - args.start_row - 1, tally-1))
 
-            normalised = json_normalize(results['emails'])
-            normalised['org'] = row['Firm']
-            normalised.to_csv(output_file, mode='a', header=False, encoding='utf-8')
-            normalised2 = normalised2.append(normalised, sort=True)
+        # Had to remove limit=100 as it broke the client
+        try:
+            results = hunter.domain_search(domain, emails_type='personal')
+        except requests.exceptions.HTTPError as e:
+            print("Received error: {}".format(e))
+            break
 
-    normalised2.to_csv(output_file)
+        normalized = json_normalize(results['emails'])
+        normalized['org'] = row['Firm']
+        normalized.to_csv(
+                args.output_file,
+                mode='a',
+                header=False,
+                encoding='utf-8'
+        )
 
 if __name__ == "__main__":
     main()

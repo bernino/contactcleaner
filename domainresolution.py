@@ -130,7 +130,7 @@ def main():
 
         orgname = row['Firm']
         location = row['Location']
-        print("Processing {} ({}/{})".format(orgname, index, tally-1))
+        print("Processing {} ({}/{})".format(orgname, index - args.start_row - 1, tally-1))
 
         # Try with google's first result
         name = googlesearch(orgname, location)
