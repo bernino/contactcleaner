@@ -72,7 +72,6 @@ def main():
         sys.exit(1)
 
     hunter = PyHunter(HUNTER_API_KEY)
-
     normalised2 = pd.DataFrame()
 
     # Just in case there are duplicate domains we don't want to API call twice
