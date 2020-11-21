@@ -57,7 +57,6 @@ def main():
 
     # Make sure we can load the file
     df = pd.read_csv(args.input_file)
-    tally = len(df)
 
     if args.start_row != 0:
         print("Starting on row {}".format(args.start_row + 1))
@@ -73,6 +72,7 @@ def main():
 
     hunter = PyHunter(HUNTER_API_KEY)
     normalised2 = pd.DataFrame()
+    tally = len(df)
 
     # Just in case there are duplicate domains we don't want to API call twice
     df = df.drop_duplicates(subset=['Domain'])

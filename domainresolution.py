@@ -112,7 +112,6 @@ def main():
 
     # Make sure we can load the file
     df = pd.read_csv(args.input_file)
-    tally = len(df)
 
     if args.start_row != 0:
         print("Starting on row {}".format(args.start_row + 1))
@@ -122,6 +121,8 @@ def main():
         print("Will stop on row {}".format(args.end_row + 1))
         df = df[:args.end_row + 1]
 
+    # Get total list for progress monitor.
+    tally = len(df)
 
     for index, row in df.iterrows():
         # Let's make sure we have nice and formatted company namnes
