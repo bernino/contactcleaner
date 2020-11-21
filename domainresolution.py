@@ -1,12 +1,13 @@
-import json
 import os
 import configparser
 import sys
+import json
+import argparse
+from time import sleep
 import clearbit
 import pandas as pd
 import requests
 import tldextract
-from time import sleep
 from serpapi import GoogleSearch
 
 if os.getenv('CLEARBIT_TOKEN'):
@@ -20,6 +21,7 @@ else:
 
 if os.getenv('SERP_API_KEY'):
     serp_api_key = os.getenv('SERP_API_KEY')
+    serp_api_fast = bool(os.getenv('SERP_API_FAST', False))
 else:
     config = configparser.ConfigParser()
     config.read('secrets')
@@ -30,6 +32,12 @@ def googlesearch(name, location=False):
     """
     Perform Google Search lookup.
     """
+
+    # The base plan for SerpAPI is rate limited to 1k calls per hour.
+    # We intentionally slow this down to avoid hitting the rate limit.
+    if not serp_api_fast:
+        sleep(2.5)
+
     if not location:
         client = GoogleSearch({"q": name, "api_key": serp_api_key})
     else:
@@ -52,6 +60,7 @@ def get_domain_from_clearbit(name):
     but not as precise...
     https://github.com/VonStruddle/PyHunter
     """
+    clearbit.key = CLEARBIT_TOKEN
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer {0}'.format(clearbit.key)
@@ -66,24 +75,53 @@ def get_domain_from_clearbit(name):
 
 
 def main():
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    skip_to_row = int(sys.argv[3])
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            "--input-file",
+            help="The input CSV file. Must have the 'Firm' column (and can also have the optional 'Location' column).",
+            type=str,
+            default=0
+    )
+    parser.add_argument(
+            "--output-file",
+            help="The output CSV file.",
+            type=str,
+            default=0
+    )
+    parser.add_argument(
+            "--start-row",
+            help="The row in input file to start on",
+            type=int,
+            default=0
+    )
+    parser.add_argument(
+            "--end-row",
+            help="The row in input file to end on",
+            type=int,
+            default=0
+    )
+    args = parser.parse_args()
 
-    if not os.path.isfile(input_file):
+    if not os.path.isfile(args.input_file):
         print("Input file doesn't exist. Exiting.")
         sys.exit(1)
 
-    if os.path.isfile(output_file) and not skip_to_row:
-        print("Output file ({}) exists already. Exiting.".format(output_file))
+    if os.path.isfile(args.output_file) and not (args.end_row or args.start_row):
+        print("Output file ({}) exists already. Exiting.".format(args.output_file))
         sys.exit(1)
 
-    clearbit.key = CLEARBIT_TOKEN
+    # Make sure we can load the file
+    df = pd.read_csv(args.input_file)
+    tally = len(df)
 
-    df = pd.read_csv(input_file)
+    if args.start_row != 0:
+        print("Starting on row {}".format(args.start_row + 1))
+        df = df[args.start_row +1 :]
 
-    if skip_to_row:
-        df = df[skip_to_row:]
+    if args.end_row != 0:
+        print("Will stop on row {}".format(args.end_row + 1))
+        df = df[:args.end_row + 1]
+
 
     for index, row in df.iterrows():
         # Let's make sure we have nice and formatted company namnes
@@ -91,7 +129,7 @@ def main():
 
         orgname = row['Firm']
         location = row['Location']
-        print("Processing {} ({}/{})".format(orgname, index, len(df)-1))
+        print("Processing {} ({}/{})".format(orgname, index, tally-1))
 
         # Try with google's first result
         name = googlesearch(orgname, location)
@@ -107,17 +145,14 @@ def main():
                 df.loc[index,'Domain'] = name
                 print("Found via Clearbit: {}".format(name))
         else:
-            print("Unable to find record in Google lookup. Assuming rate limiting. Sleeping for 30s")
+            print("Unable to find record in Google lookup.")
+            print("Assuming rate limiting. Sleeping for 30s.")
             sleep(30)
-            break
 
         record = df.loc[index, :]
         record = pd.DataFrame(record)
         record = record.transpose()
-        record.to_csv(output_file, mode='a', header=False)
-        del record
-
-    df.to_csv(output_file)
+        record.to_csv(args.output_file, mode='a', header=False)
 
 if __name__ == "__main__":
     main()

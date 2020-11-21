@@ -1,7 +1,8 @@
-import configparser
 import sys
 import os
+import argparse
 import requests
+import configparser
 import pandas as pd
 from pyhunter import PyHunter
 from pandas import json_normalize
@@ -19,27 +20,58 @@ else:
 
 
 def main():
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    skip_to_row = int(sys.argv[3])
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            "--input-file",
+            help="The input CSV file. Must have the 'Firm' column (and can also have the optional 'Location' column).",
+            type=str,
+            default=0
+    )
+    parser.add_argument(
+            "--output-file",
+            help="The output CSV file.",
+            type=str,
+            default=0
+    )
+    parser.add_argument(
+            "--start-row",
+            help="The row in input file to start on",
+            type=int,
+            default=0
+    )
+    parser.add_argument(
+            "--end-row",
+            help="The row in input file to end on",
+            type=int,
+            default=0
+    )
+    args = parser.parse_args()
 
-    if not os.path.isfile(input_file):
+    if not os.path.isfile(args.input_file):
         print("Input file doesn't exist. Exiting.")
         sys.exit(1)
 
-    if os.path.isfile(output_file) and not skip_to_row:
-        print("Output file ({}) exists already. Exiting.".format(output_file))
+    if os.path.isfile(args.output_file) and not (args.end_row or args.start_row):
+        print("Output file ({}) exists already. Exiting.".format(args.output_file))
         sys.exit(1)
+
+    # Make sure we can load the file
+    df = pd.read_csv(args.input_file)
+    tally = len(df)
+
+    if args.start_row != 0:
+        print("Starting on row {}".format(args.start_row + 1))
+        df = df[args.start_row +1 :]
+
+    if args.end_row != 0:
+        print("Will stop on row {}".format(args.end_row + 1))
+        df = df[:args.end_row + 1]
 
     if not HUNTER_API_KEY:
         print("Hunter API Key missing. Exiting.")
         sys.exit(1)
 
     hunter = PyHunter(HUNTER_API_KEY)
-    df = pd.read_csv(input_file)
-
-    if skip_to_row:
-        df = df[skip_to_row:]
 
     normalised2 = pd.DataFrame()
 
@@ -51,7 +83,7 @@ def main():
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
         if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
-            print("Processing {} ({}/{})".format(domain, index, len(df)-1))
+            print("Processing {} ({}/{})".format(domain, index, tally-1))
 
             # Had to remove limit=100 as it broke the client
             try:
