@@ -59,12 +59,12 @@ def main():
     df = pd.read_csv(args.input_file)
 
     if args.start_row != 0:
-        print("Starting on row {}".format(args.start_row + 1))
-        df = df[args.start_row + 1 :]
+        print("Starting on row {}".format(args.start_row))
+        df = df[args.start_row:]
 
     if args.end_row != 0:
-        print("Will stop on row {}".format(args.end_row + 1))
-        df = df[:args.end_row + 1]
+        print("Will stop on row {}".format(args.end_row))
+        df = df[:args.end_row]
 
     if not HUNTER_API_KEY:
         print("Hunter API Key missing. Exiting.")
@@ -84,7 +84,7 @@ def main():
             print("{} is an invalid domain. Skipping.".format(domain))
             break
 
-        print("Processing {} ({}/{})".format(domain, index - args.start_row - 1, tally-1))
+        print("Processing {} ({}/{})".format(domain, index - args.start_row, tally))
 
         # Had to remove limit=100 as it broke the client
         try:
@@ -98,9 +98,10 @@ def main():
         normalized.to_csv(
                 args.output_file,
                 mode='a',
-                header=False,
+                header=1,
                 encoding='utf-8'
         )
+        print(normalized.columns)
 
 if __name__ == "__main__":
     main()
