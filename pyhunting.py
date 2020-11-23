@@ -1,7 +1,8 @@
-import configparser
 import sys
 import os
+import argparse
 import requests
+import configparser
 import pandas as pd
 from pyhunter import PyHunter
 from pandas import json_normalize
@@ -19,32 +20,58 @@ else:
 
 
 def main():
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    skip_to_row = False
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            "--input-file",
+            help="The input CSV file. Must have the 'Firm' column (and can also have the optional 'Location' column).",
+            type=str,
+            default=0
+    )
+    parser.add_argument(
+            "--output-file",
+            help="The output CSV file.",
+            type=str,
+            default=0
+    )
+    parser.add_argument(
+            "--start-row",
+            help="The row in input file to start on",
+            type=int,
+            default=0
+    )
+    parser.add_argument(
+            "--end-row",
+            help="The row in input file to end on",
+            type=int,
+            default=0
+    )
+    args = parser.parse_args()
 
-    if not os.path.isfile(input_file):
+    if not os.path.isfile(args.input_file):
         print("Input file doesn't exist. Exiting.")
         sys.exit(1)
 
-    if os.path.isfile(output_file) and not skip_to_row:
-        print("Output file ({}) exists already. Exiting.".format(output_file))
+    if os.path.isfile(args.output_file) and not (args.end_row or args.start_row):
+        print("Output file ({}) exists already. Exiting.".format(args.output_file))
         sys.exit(1)
 
-    if len(sys.argv) > 3:
-        skip_to_row = int(sys.argv[3])
+    # Make sure we can load the file
+    df = pd.read_csv(args.input_file)
+
+    if args.start_row != 0:
+        print("Starting on row {}".format(args.start_row))
+        df = df[args.start_row:]
+
+    if args.end_row != 0:
+        print("Will stop on row {}".format(args.end_row))
+        df = df[:args.end_row]
 
     if not HUNTER_API_KEY:
         print("Hunter API Key missing. Exiting.")
         sys.exit(1)
 
     hunter = PyHunter(HUNTER_API_KEY)
-    df = pd.read_csv(input_file)
-
-    if skip_to_row:
-        df = df[skip_to_row:]
-
-    normalised2 = pd.DataFrame()
+    tally = len(df)
 
     # Just in case there are duplicate domains we don't want to API call twice
     df = df.drop_duplicates(subset=['Domain'])
@@ -53,22 +80,28 @@ def main():
         domain = row['Domain']
         # validators.domain does exactly that - nifty little tool
         # also we only want to lookup unique domains
-        if validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
-            print("Processing {} ({}/{})".format(domain, index, len(df)-1))
+        if not validators.domain(domain) and domain != 'wikipedia.org' and domain != '4icu.org':
+            print("{} is an invalid domain. Skipping.".format(domain))
+            break
 
-            # Had to remove limit=100 as it broke the client
-            try:
-                results = hunter.domain_search(domain, emails_type='personal')
-            except requests.exceptions.HTTPError as e:
-                print("Received error: {}".format(e))
-                break
+        print("Processing {} ({}/{})".format(domain, index - args.start_row, tally))
 
-            normalised = json_normalize(results['emails'])
-            normalised['org'] = row['Firm']
-            normalised.to_csv(output_file, mode='a', header=False, encoding='utf-8')
-            normalised2 = normalised2.append(normalised, sort=True)
+        # Had to remove limit=100 as it broke the client
+        try:
+            results = hunter.domain_search(domain, emails_type='personal')
+        except requests.exceptions.HTTPError as e:
+            print("Received error: {}".format(e))
+            break
 
-    normalised2.to_csv(output_file)
+        normalized = json_normalize(results['emails'])
+        normalized['org'] = row['Firm']
+        normalized.to_csv(
+                args.output_file,
+                mode='a',
+                header=1,
+                encoding='utf-8'
+        )
+        print(normalized.columns)
 
 if __name__ == "__main__":
     main()
