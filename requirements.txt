@@ -3,7 +3,7 @@ chardet==3.0.4
 clearbit==0.1.7
 google-search-results==2.0.0
 idna==2.9
-numpy==1.18.3
+numpy==1.22.0
 pandas==1.0.3
 python-dateutil==2.8.1
 validators==0.18.1
